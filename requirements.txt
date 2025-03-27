@@ -1,1 +1,13 @@
-
+numpy
+requests
+PyPDF2
+soundfile
+tqdm
+pathlib
+fastapi
+uvicorn
+python-multipart
+openai
+google-genai
+anthropic
+elevenlabs
