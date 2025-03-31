@@ -110,7 +110,7 @@ def run_transcriber(seed: int = 45) -> None:
         transcript = fetcher.fetch_transcript(url)
         print("Transcript fetched successfully.")
 
-        output_file = 'tests/data/transcripts/youtube_transcript2.txt'
+        output_file = 'tests/transcripts/youtube_transcript.txt'
         with open(output_file, 'w', encoding='utf-8') as file:
             file.write(transcript)
 
