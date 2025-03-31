@@ -2,6 +2,8 @@ import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
+from enum import Enum
+from pydantic import BaseModel, SecretStr
 
 from langchain_anthropic import ChatAnthropic
 from langchain_community.chat_models import ChatLiteLLM
@@ -12,7 +14,6 @@ from langchain_google_vertexai.model_garden import ChatAnthropicVertex
 from langchain_groq.chat_models import ChatGroq
 from langchain_ollama.chat_models import ChatOllama
 from langchain_openai.chat_models import ChatOpenAI
-from pydantic import SecretStr
 
 
 @dataclass
@@ -172,4 +173,86 @@ class AnthropicLLM(BaseLLM):
             top_p=self.top_p,
             temperature=self.temperature or 0.5,
         )
+
+class LLM(str, Enum):
+    OPENAI = 'openai'
+    LMSTUDIO = 'lmstudio'
+    OLLAMA = 'ollama'
+    GROQ = 'groq'
+    AZURE = 'azure'
+    GOOGLE = 'google'
+    ANTHROPIC = 'anthropic'
+    ELEVENLABS = 'elevenlabs'
+    CUSTOM = 'custom'
+
+class ClientConfig(BaseModel):
+    name: Provider
+    key: Optional[str] = None
+    endpoint: Optional[str] = None
+    version: Optional[str] = None
+
+def initialize_client(config: Optional[Dict[str, Any]] = None) -> Any:
+    if not config:
+        raise ValueError("Configuration must be provided.")
+    
+    try:
+        client_config = ClientConfig(**config)
+    except Exception as e:
+        raise ValueError(f"Invalid configuration: {e}")
+    
+    api_key = client_config.key
+
+    if client_config.name == LLM.OPENAI:
+        if not api_key:
+            raise ValueError("API key is required for OpenAI provider.")
+        return OpenAI(api_key=api_key)
+    
+    elif client_config.name == LLM.LMSTUDIO:
+        if not api_key:
+            raise ValueError("API key is required for LMStudio provider.")
+        return OpenAI(base_url='http://localhost:1234/v1', api_key=api_key)
+    
+    elif client_config.name == LLM.OLLAMA:
+        if not api_key:
+            raise ValueError("API key is required for Ollama provider.")
+        return OpenAI(base_url='http://localhost:11434/v1', api_key=api_key)
+    
+    elif client_config.name == LLM.GROQ:
+        if not api_key:
+            raise ValueError("API key is required for Groq provider.")
+        return OpenAI(base_url='https://api.groq.com/openai/v1', api_key=api_key)
+    
+    elif client_config.name == LLM.AZURE:
+        if not all([api_key, client_config.endpoint, client_config.version]):
+            raise ValueError("API key, endpoint, and version are required for Azure provider.")
+        return AzureOpenAI(
+            azure_endpoint=client_config.endpoint,
+            api_version=client_config.version,
+            api_key=api_key
+        )
+    
+    elif client_config.name == LLM.GOOGLE:
+        if not api_key:
+            raise ValueError("API key is required for Google provider.")
+        return genai.Client(api_key=api_key)
+    
+    elif client_config.name == LLM.ANTHROPIC:
+        if not api_key:
+            raise ValueError("API key is required for Anthropic provider.")
+        return Anthropic(api_key=api_key)
+    
+    elif client_config.name == LLM.ELEVENLABS:
+        if not api_key:
+            raise ValueError("API key is required for ElevenLabs provider.")
+        return ElevenLabs(api_key=api_key)
+    
+    elif client_config.name == LLM.CUSTOM:
+        if not all([api_key, client_config.endpoint]):
+            raise ValueError("API key and endpoint are required for custom provider.")
+        return OpenAI(base_url=client_config.endpoint, api_key=api_key)
+    
+    else:
+        raise ValueError(f"Unsupported provider: {client_config.name}")
+
+
 
