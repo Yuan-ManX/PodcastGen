@@ -174,6 +174,7 @@ class AnthropicLLM(BaseLLM):
             temperature=self.temperature or 0.5,
         )
 
+
 class LLM(str, Enum):
     OPENAI = 'openai'
     LMSTUDIO = 'lmstudio'
@@ -185,11 +186,13 @@ class LLM(str, Enum):
     ELEVENLABS = 'elevenlabs'
     CUSTOM = 'custom'
 
+
 class ClientConfig(BaseModel):
     name: Provider
     key: Optional[str] = None
     endpoint: Optional[str] = None
     version: Optional[str] = None
+
 
 def initialize_client(config: Optional[Dict[str, Any]] = None) -> Any:
     if not config:
